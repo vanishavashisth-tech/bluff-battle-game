@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bluff Battle — Party Game</title>
+<style>
+:root{--bg:#0b1024;--panel:#151b39;--panel2:#20284b;--text:#f5f7ff;--muted:#b7c0e7;--pink:#ff4fbd;--cyan:#62e7ff;--gold:#ffd166;--green:#75f0ad}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);background:radial-gradient(circle at 15% 5%,#2a1b57 0,transparent 35%),radial-gradient(circle at 90% 20%,#123b5a 0,transparent 30%),var(--bg)}
+main{max-width:900px;margin:auto;padding:28px 18px 50px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}.logo{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,var(--pink),#7758ff);font-size:26px;box-shadow:0 8px 28px #ff4fbd35}.brand h1{font-size:clamp(26px,5vw,40px);margin:0;letter-spacing:-1px}.brand p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.card{background:linear-gradient(145deg,#171d3beF,#11172f);border:1px solid #ffffff18;border-radius:22px;padding:clamp(18px,4vw,30px);box-shadow:0 18px 55px #0003;margin:16px 0}.eyebrow{text-transform:uppercase;letter-spacing:2px;color:var(--cyan);font-weight:800;font-size:11px}.muted{color:var(--muted)}h2{margin:8px 0 12px;font-size:25px}label{display:block;font-size:13px;color:var(--muted);margin:13px 0 7px}input,select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid #ffffff22;background:#0c122a;color:white;font:inherit;outline:none}input:focus,select:focus{border-color:var(--cyan)}button{border:0;border-radius:12px;padding:13px 17px;font-weight:800;font-size:14px;cursor:pointer;color:#10122a;background:linear-gradient(100deg,var(--cyan),#9cf6ef);transition:transform .15s}button:hover{transform:translateY(-1px)}button.secondary{background:#ffffff10;color:white;border:1px solid #ffffff24}button.pink{background:linear-gradient(100deg,var(--pink),#ff9bdc);color:#250d29}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}.hidden{display:none!important}.pill{display:inline-block;padding:6px 10px;border-radius:99px;background:#ffffff0c;border:1px solid #ffffff20;font-size:12px;color:var(--muted)}.topline{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.players{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}.player{padding:9px 12px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff18;font-size:13px}.player strong{color:var(--gold)}.question{font-size:clamp(22px,4vw,32px);line-height:1.25;font-weight:850;margin:15px 0}.answer-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:18px 0}.answer{background:var(--panel2);color:white;border:1px solid #ffffff20;text-align:left;min-height:58px}.answer.selected{border:2px solid var(--cyan);background:#17435a}.answer:disabled{opacity:.7;cursor:default}.notice{padding:12px 14px;border-radius:12px;background:#62e7ff12;border:1px solid #62e7ff35;color:#dffaff;font-size:14px;line-height:1.5}.score-row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #ffffff12}.score-row:last-child{border:0}.bigscore{color:var(--gold);font-weight:900}.footer{text-align:center;color:#8993bd;font-size:12px;margin-top:26px}
+@media(max-width:540px){main{padding:18px 12px 35px}.row{flex-direction:column}.row button{width:100%}}
+</style>
+</head>
+<body>
+<main>
+  <header class="brand"><div class="logo">🎭</div><div><h1>Bluff Battle</h1><p>Think fast. Bluff harder. Win the room.</p></div></header>
+
+  <section id="setup" class="card">
+    <div class="eyebrow">Party game · 2–4 players</div>
+    <h2>Start a battle</h2>
+    <p class="muted">A pass-and-play prototype: everyone takes turns on one device. Create a room code, add players, and see who can fool the room.</p>
+    <div class="row">
+      <div><label for="room">Room code</label><input id="room" maxlength="6" value="7F3K" aria-label="Room code"></div>
+      <div><label for="count">Number of players</label><select id="count"><option>2</option><option selected>3</option><option>4</option></select></div>
+    </div>
+    <div id="nameFields"></div>
+    <div class="row" style="margin-top:18px"><button id="start">Start game →</button><button class="secondary" id="randomRoom">Random room code</button></div>
+    <p class="muted" style="font-size:12px;margin-bottom:0">Note: this version is a local prototype, not yet synchronized between separate devices.</p>
+  </section>
+
+  <section id="game" class="card hidden">
+    <div class="topline"><span class="pill" id="roundLabel">ROUND 1 / 3</span><span class="pill">ROOM <strong id="roomLabel">7F3K</strong></span></div>
+    <div class="players" id="playerChips"></div>
+    <div id="phaseArea"></div>
+  </section>
+
+  <section id="results" class="card hidden">
+    <div class="eyebrow">Battle complete</div><h2 id="winnerTitle">The winner is…</h2>
+    <p class="muted">Final scoreboard</p><div id="finalScores"></div>
+    <button id="playAgain" style="margin-top:18px">Play again ↻</button>
+  </section>
+  <div class="footer">Bluff Battle · A multiplayer game prototype</div>
+</main>
+<script>
+const QUESTIONS = [
+ {q:"Which animal can sleep for the longest time?", real:"Koala", fakes:["Bear","Cat","Elephant"]},
+ {q:"What is the official name for a group of flamingos?", real:"A flamboyance", fakes:["A pink parade","A shimmer","A flocklet"]},
+ {q:"Which planet rains diamonds in theory?", real:"Neptune", fakes:["Mars","Venus","Mercury"]},
+ {q:"What is a baby puffin called?", real:"A puffling", fakes:["A pufflet","A chicklet","A flapper"]},
+ {q:"Which food can stay edible for thousands of years when stored well?", real:"Honey", fakes:["Bread","Cheese","Rice"]},
+ {q:"What is the fear of long words jokingly called?", real:"Hippopotomonstrosesquipedaliophobia", fakes:["Lexicophobia","Verbophobia","Logophobia"]}
+];
+let players=[], round=0, scores=[], used=[], phase=""; let bluffAnswers=[], currentSubmit=0, votes={}, selectedVote=null, currentQ=null;
+const $=id=>document.getElementById(id);
+function buildNames(){const n=+$("count").value; $("nameFields").innerHTML=""; for(let i=0;i<n;i++){const lab=document.createElement("label");lab.textContent=`Player ${i+1} name`;const inp=document.createElement("input");inp.id=`p${i}`;inp.placeholder=`Player ${i+1}`;inp.maxLength=18;inp.value=["Alex","Sam","Jordan","Taylor"][i];$("nameFields").append(lab,inp)}}
+$("count").addEventListener("change",buildNames);buildNames();
+$("randomRoom").onclick=()=>{$("room").value=Math.random().toString(36).slice(2,6).toUpperCase()};
+$("start").onclick=()=>{players=[];for(let i=0;i<+$("count").value;i++)players.push($(`p${i}`).value.trim()||`Player ${i+1}`);scores=players.map(()=>0);round=0;used=[];$("setup").classList.add("hidden");$("results").classList.add("hidden");$("game").classList.remove("hidden");$("roomLabel").textContent=($("room").value.trim()||"7F3K").toUpperCase();nextRound()};
+function renderChips(){ $("playerChips").innerHTML=players.map((p,i)=>`<span class="player">${esc(p)} <strong>${scores[i]} pts</strong></span>`).join("")}
+function nextRound(){if(round>=3){showResults();return}round++;currentQ;let available=QUESTIONS.map((q,i)=>({...q,index:i})).filter(q=>!used.includes(q.index));if(!available.length){used=[];available=QUESTIONS.map((q,i)=>({...q,index:i}))}currentQ=available[Math.floor(Math.random()*available.length)];used.push(currentQ.index);bluffAnswers=Array(players.length).fill("");votes={};currentSubmit=0;phase="bluff";$("roundLabel").textContent=`ROUND ${round} / 3`;renderChips();renderPhase()}
+function renderPhase(){const area=$("phaseArea");area.innerHTML="";
+ if(phase==="bluff"){area.innerHTML=`<div class="eyebrow">Phase 1 · Make them believe</div><div class="question">${esc(currentQ.q)}</div><p class="muted">Real answer is hidden. Each player gets a turn to enter a convincing fake answer. Pass the device after submitting.</p><div class="notice"><strong>${esc(players[currentSubmit])}'s turn</strong> — enter a fake answer. Don't use the real answer!</div><label for="bluffInput">Your fake answer</label><input id="bluffInput" maxlength="90" placeholder="Type something believable…"><button id="submitBluff" style="margin-top:12px;width:100%">Submit bluff</button><p class="muted" style="font-size:12px">Player ${currentSubmit+1} of ${players.length}</p>`;
+ $("submitBluff").onclick=()=>{const val=$("bluffInput").value.trim();if(!val){$("bluffInput").focus();return}if(val.toLowerCase()===currentQ.real.toLowerCase()){alert("That's the real answer! Try a different bluff.");return}bluffAnswers[currentSubmit]=val;currentSubmit++;if(currentSubmit>=players.length){phase="vote";prepareVoteOptions()}else renderPhase()};}
+ else if(phase==="vote"){let voter=Object.keys(votes).length; if(voter>=players.length){scoreRound();return}let opts=[{text:currentQ.real,owner:-1},...bluffAnswers.map((a,i)=>({text:a,owner:i}))];for(let i=opts.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}
+ area.innerHTML=`<div class="eyebrow">Phase 2 · Spot the truth</div><div class="question">${esc(currentQ.q)}</div><div class="notice"><strong>${esc(players[voter])}'s turn to vote.</strong> Choose the answer you think is real. Pass the device to the next player after voting.</div><div class="answer-list" id="answers"></div><button id="castVote" style="width:100%" disabled>Lock in vote</button>`;
+ opts.forEach(opt=>{let b=document.createElement("button");b.className="answer";b.textContent=opt.text;b.onclick=()=>{selectedVote=opt;b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");$("castVote").disabled=false};$("answers").append(b)});
+ $("castVote").onclick=()=>{if(!selectedVote)return;votes[voter]=selectedVote.owner;selectedVote=null;renderPhase()};}
+ else if(phase==="score"){area.innerHTML=`<div class="eyebrow">Round ${round} results</div><div class="question">${esc(currentQ.q)}</div><div class="notice">The real answer was <strong>${esc(currentQ.real)}</strong>.</div><div id="roundScores"></div><button id="nextRound" style="width:100%;margin-top:18px">${round===3?"See final results":"Next round →"}</button>`;let rs=$("roundScores");players.forEach((p,i)=>{let pts=(votes[i]===-1?2:0)+bluffAnswers.reduce((sum,a,j)=>sum+(votes[i]===j?3:0),0);rs.innerHTML+=`<div class="score-row"><span>${esc(p)} ${votes[i]===-1?"· guessed correctly":""}</span><strong class="bigscore">+${pts}</strong></div>`});$("nextRound").onclick=nextRound;}
+ renderChips();}
+function prepareVoteOptions(){selectedVote=null;renderPhase()}
+function scoreRound(){for(let i=0;i<players.length;i++){if(votes[i]===-1)scores[i]+=2;for(let j=0;j<players.length;j++)if(votes[i]===j)scores[j]+=3}phase="score";renderPhase()}
+function showResults(){$("game").classList.add("hidden");$("results").classList.remove("hidden");let high=Math.max(...scores);let winners=players.filter((p,i)=>scores[i]===high);$("winnerTitle").textContent=(winners.length>1?"It's a tie: ":"Winner: ")+winners.join(" & ")+" 🏆";$("finalScores").innerHTML=players.map((p,i)=>`<div class="score-row"><span>${esc(p)}</span><strong class="bigscore">${scores[i]} pts</strong></div>`).join("")}
+$("playAgain").onclick=()=>{$("results").classList.add("hidden");$("setup").classList.remove("hidden")};
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+</script>
+</body></html>
